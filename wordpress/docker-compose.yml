@@ -4,7 +4,7 @@ services:
   db:
     image: mysql:5.7
     volumes:
-      - ${APP_PATH:-./data}/mysql:/var/lib/mysql
+      - ${APP_PATH:-../sites/wordpress}/mysql:/var/lib/mysql
     restart: always
     networks:
       - traefik_network
@@ -19,7 +19,7 @@ services:
     image: wordpress:5.3.2
     restart: always
     volumes:
-    - ${APP_PATH:-./data}/wp-content:/var/www/html/wp-content
+    - ${APP_PATH:-../sites/wordpress}/wp-content:/var/www/html/wp-content
     # uncomment and customize the line below for theme development (replace theme-name by your own)
     #- ${APP_PATH:-./data}/theme-name/trunk/:/var/www/html/wp-content/themes/theme-name
     # uncomment and customize the line below for plugin development (replace plugin-name by your own)
