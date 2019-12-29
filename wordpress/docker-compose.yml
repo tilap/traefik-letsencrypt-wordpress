@@ -1,0 +1,69 @@
+version: '3.3'
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - ${APP_PATH:-./data}/mysql:/var/lib/mysql
+    restart: always
+    networks:
+      - traefik_network
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:5.3.2
+    restart: always
+    volumes:
+    - ${APP_PATH:-./data}/wp-content:/var/www/html/wp-content
+    # uncomment and customize the line below for theme development (replace theme-name by your own)
+    #- ${APP_PATH:-./data}/theme-name/trunk/:/var/www/html/wp-content/themes/theme-name
+    # uncomment and customize the line below for plugin development (replace plugin-name by your own)
+    #- ${APP_PATH:-./data}/plugin-name/trunk/:/var/www/html/wp-content/plugins/plugin-name
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      # WORDPRESS_TABLE_PREFIX:
+      # WORDPRESS_AUTH_KEY:
+      # WORDPRESS_SECURE_AUTH_KEY:
+      # WORDPRESS_LOGGED_IN_KEY:
+      # WORDPRESS_NONCE_KEY:
+      # WORDPRESS_AUTH_SALT:
+      # WORDPRESS_SECURE_AUTH_SALT:
+      # WORDPRESS_LOGGED_IN_SALT:
+      # WORDPRESS_NONCE_SALT:
+      # WORDPRESS_DEBUG:
+      # WORDPRESS_CONFIG_EXTRA:
+
+    ## enable traefik    
+    networks:
+      - traefik_network
+    labels:
+      traefik.enable: true
+      # HTTP redirect to HTTPS
+      traefik.http.middlewares.wpwebsite-https-redirect.redirectscheme.scheme: https
+      # HTTP
+      traefik.http.routers.wpwebsite.rule: Host(`${SITE_URL:-app.youpi.com}`)
+      traefik.http.routers.wpwebsite.entrypoints: http
+      traefik.http.routers.wpwebsite.middlewares: wpwebsite-https-redirect
+      # HTTPS
+      traefik.http.routers.wpwebsite-secure.entrypoints: https
+      traefik.http.routers.wpwebsite-secure.rule: Host(`${SITE_URL:-app.youpi.com}`)
+      traefik.http.routers.wpwebsite-secure.tls: true
+      traefik.http.routers.wpwebsite-secure.tls.certresolver: wordpresschallenge
+
+volumes:
+    db_data: {}
+
+# Create a network before using this file:
+# Local env (dev): `docker create network <YOUR_NETWORK>`
+# Swarm env (prod): `docker create network --driver overlay <YOUR_NETWORK>`
+networks:
+  traefik_network:
+    external: true

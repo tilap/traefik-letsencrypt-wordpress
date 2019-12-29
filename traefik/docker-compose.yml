@@ -1,0 +1,43 @@
+version: "3.0"
+services:
+  traefik:
+    image: traefik:v2.0
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/traefik.yml:ro
+      - ./acme:/acme
+    # adding the traefik labels let us share the traefik admin panel
+    labels:
+      traefik.enable: true
+      # HTTP
+      traefik.http.routers.traefik.entrypoints: http
+      traefik.http.routers.traefik.rule: Host(`${TRAEFIK_HOST:-api.youpi.com}`)
+      # Dashboard
+      traefik.http.routers.traefik-secure.service: api@internal
+      traefik.http.routers.traefik-secure.middlewares: traefik-auth
+      traefik.http.middlewares.traefik-auth.basicauth.users: "${TRAEFIK_BASICAUTH:-username:$$apr1$$wn/7jDxh$$DOPLsJgWJ6LJbVny0JL1x1}"
+      # Middleware
+      traefik.http.routers.traefik.middlewares: traefik-https-redirect
+      traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme: https
+      # HTTPS
+      traefik.http.routers.traefik.rule: Host(`${TRAEFIK_HOST:-api.youpi.com}`)
+      traefik.http.routers.traefik-secure.entrypoints: https
+      traefik.http.routers.traefik-secure.rule: Host(`${TRAEFIK_HOST:-api.youpi.com}`)
+      traefik.http.routers.traefik-secure.tls: true
+      traefik.http.routers.traefik-secure.tls.certresolver: traefikchallenge
+    networks:
+      - traefik_network
+
+# Create a network before using this file:
+# Local env (dev): `docker create network <YOUR_NETWORK>`
+# Swarm env (prod): `docker create network --driver overlay <YOUR_NETWORK>`
+networks:
+  traefik_network:
+    external: true

@@ -1,0 +1,34 @@
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  http:
+    address: ":80"
+  https:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+
+certificatesResolvers:
+  traefikchallenge:
+    acme:
+      email: jlavinh+letsencrypt@gmail.com
+      storage: acme/traefikchallenge.acme.json
+      httpChallenge:
+        entryPoint: http
+      
+      # uncomment the line below on dev
+      caserver: https://acme-staging-v02.api.letsencrypt.org/directory
+  wordpresschallenge:
+    acme:
+      email: jlavinh+letsencrypt@gmail.com
+      storage: acme/wordpresschallenge.acme.json
+      httpChallenge:
+        entryPoint: http
+      
+      # uncomment the line below on dev
+      caserver: https://acme-staging-v02.api.letsencrypt.org/directory
